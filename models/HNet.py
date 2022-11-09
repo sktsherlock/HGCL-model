@@ -71,13 +71,13 @@ class HNet(torch.nn.Module):
         x_3, edge_index_3, edge_attr_3, batch_3, _, _ = self.pool3(x, edge_index_2, edge_attr_2, batch_2)
         g3 = torch.cat([gmp(x_3, batch_3), gap(x_3, batch_3)], dim=1)
 
-        x = F.relu(g1) + F.relu(g2) + F.relu(g3)
+        x = g1 + g2 + g3
 
-        x = F.relu(self.linear1(x))
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.relu(self.linear2(x))
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = F.log_softmax(self.linear3(x), dim=-1)
+        # x = F.relu(self.linear1(x))
+        # x = F.dropout(x, p=self.dropout, training=self.training)
+        # x = F.relu(self.linear2(x))
+        # x = F.dropout(x, p=self.dropout, training=self.training)
+        # x = F.log_softmax(self.linear3(x), dim=-1)
 
         return x, g1, g2, g3, proj_1, proj_2, proj_3
 
