@@ -84,7 +84,7 @@ class HNet(torch.nn.Module):
             for data in loader:
                 # data = data[0]
                 data.to(device)
-                x, *_ = self(x, data)
+                x, *_ = self(data)
                 ret.append(x)
                 y.append(data.y)
             ret = torch.cat(ret, dim=0)
