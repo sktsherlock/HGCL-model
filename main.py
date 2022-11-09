@@ -103,7 +103,7 @@ def train(cf, model, dataloader):
                 data.x = torch.ones(data.num_nodes, 1).to(cf.device)
             _, g1, g2, g3, p1, p2, p3 = model(data)
 
-            loss = innercl(proj_1, proj_2) + innercl(proj_2, proj_3) + innercl(proj_1, proj_3)
+            loss = innercl(p1, p2) + innercl(p2, p3) + innercl(p1, p3)
             loss.backward()
             optimizer.step()
             loss_all += loss.item()
