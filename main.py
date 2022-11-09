@@ -130,7 +130,7 @@ def main():
     # 加载数据
     loader = build_data.build_loader(args)
     # 加载模型
-    model = HNet(args=args, config=Config)
+    model = HNet(args=args, config=Config())
     model.to(args.device)
     # 训练模型
     train(args, model, loader)

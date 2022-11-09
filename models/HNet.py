@@ -2,7 +2,8 @@ import torch
 from torch_geometric.nn import GCNConv, SAGEConv, GINConv
 from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
 import torch.nn.functional as F
-from poolings.CGIPool import CGIPool
+# import topkpooling
+from torch_geometric.nn import TopKPooling
 from MLP import MLP
 
 
@@ -26,7 +27,6 @@ class HNet(torch.nn.Module):
         self.hidden = config.hidden
         self.pooling_ratio = config.pooling_ratio
         self.dropout = config.dropout
-        self.pool = args.pool_method
 
         self.conv1 = GINConv(
             Sequential(Linear(self.num_features, self.hidden), ReLU(), Linear(self.hidden, self.hidden)))
@@ -37,9 +37,9 @@ class HNet(torch.nn.Module):
         self.projection_head_2 = MLP(in_channels=self.hidden, hidden_channels=self.hidden, out_channels=128)
         self.projection_head_3 = MLP(in_channels=self.hidden, hidden_channels=self.hidden, out_channels=128)
 
-        self.pool1 = self.pool(self.hidden, ratio=self.pooling_ratio)
-        self.pool2 = self.pool(self.hidden, ratio=self.pooling_ratio)
-        self.pool3 = self.pool(self.hidden, ratio=self.pooling_ratio)
+        self.pool1 = TopKPooling(self.hidden, ratio=self.pooling_ratio)
+        self.pool2 = TopKPooling(self.hidden, ratio=self.pooling_ratio)
+        self.pool3 = TopKPooling(self.hidden, ratio=self.pooling_ratio)
 
         self.linear1 = torch.nn.Linear(self.hidden * 2, self.hidden)
         self.linear2 = torch.nn.Linear(self.hidden, self.hidden // 2)
@@ -53,20 +53,20 @@ class HNet(torch.nn.Module):
         local_proj_1 = self.projection_head_1(x)
         proj_1 = torch.cat([gmp(local_proj_1, batch_0), gap(local_proj_1, batch_0)], dim=1)
 
-        x_1, edge_index_1, edge_attr_1, batch_1 = self.pool1(x, edge_index_0, edge_attr_0, batch_0)
+        x_1, edge_index_1, edge_attr_1, batch_1, _, _  = self.pool1(x, edge_index_0, edge_attr_0, batch_0)
 
         g1 = torch.cat([gmp(x_1, batch_1), gap(x_1, batch_1)], dim=1)
 
         x = F.relu(self.conv2(x_1, edge_index_1, edge_attr_1))
         local_proj_2 = self.projection_head_2(x)
         proj_2 = torch.cat([gmp(local_proj_2, batch_1), gap(local_proj_2, batch_1)], dim=1)
-        x_2, edge_index_2, edge_attr_2, batch_2 = self.pool2(x, edge_index_1, edge_attr_1, batch_1)
+        x_2, edge_index_2, edge_attr_2, batch_2, _, _  = self.pool2(x, edge_index_1, edge_attr_1, batch_1)
         g2 = torch.cat([gmp(x_2, batch_2), gap(x_2, batch_2)], dim=1)
 
         x = F.relu(self.conv3(x_2, edge_index_2, edge_attr_2))
         local_proj_3 = self.projection_head_3(x)
         proj_3 = torch.cat([gmp(local_proj_3, batch_2), gap(local_proj_3, batch_2)], dim=1)
-        x_3, edge_index_3, edge_attr_3, batch_3 = self.pool3(x, edge_index_2, edge_attr_2, batch_2)
+        x_3, edge_index_3, edge_attr_3, batch_3, _, _ = self.pool3(x, edge_index_2, edge_attr_2, batch_2)
         g3 = torch.cat([gmp(x_3, batch_3), gap(x_3, batch_3)], dim=1)
 
         x = F.relu(g1) + F.relu(g2) + F.relu(g3)
