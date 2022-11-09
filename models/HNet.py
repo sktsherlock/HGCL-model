@@ -4,7 +4,7 @@ from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
 import torch.nn.functional as F
 from torch_geometric.nn import TopKPooling
 from MLP import MLP
-import torch_geometric.nn as nn
+from torch import nn
 
 
 class Config():
