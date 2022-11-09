@@ -33,9 +33,9 @@ class HNet(torch.nn.Module):
         self.conv2 = GIN(self.hidden, self.hidden, self.num_layers)
         self.conv3 = GIN(self.hidden, self.hidden, self.num_layers)
 
-        self.projection_head_1 = MLP(in_channels=self.hidden, hidden_channels=self.hidden, out_channels=128)
-        self.projection_head_2 = MLP(in_channels=self.hidden, hidden_channels=self.hidden, out_channels=128)
-        self.projection_head_3 = MLP(in_channels=self.hidden, hidden_channels=self.hidden, out_channels=128)
+        self.projection_head_1 = MLP(in_channels=self.hidden * self.num_layers, hidden_channels=self.hidden, out_channels=128)
+        self.projection_head_2 = MLP(in_channels=self.hidden * self.num_layers, hidden_channels=self.hidden, out_channels=128)
+        self.projection_head_3 = MLP(in_channels=self.hidden * self.num_layers, hidden_channels=self.hidden, out_channels=128)
 
         self.pool1 = TopKPooling(self.hidden, ratio=self.pooling_ratio)
         self.pool2 = TopKPooling(self.hidden, ratio=self.pooling_ratio)
