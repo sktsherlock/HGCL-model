@@ -45,7 +45,7 @@ class HNet(torch.nn.Module):
 
     def forward(self, data):
         x_0, edge_index_0, batch_0 = data.x, data.edge_index, data.batch
-        edge_att_0 = None
+        edge_attr_0 = None
 
         x = F.relu(self.conv1(x_0, edge_index_0, edge_attr_0))
         local_proj_1 = self.projection_head_1(x)
