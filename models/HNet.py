@@ -73,11 +73,11 @@ class HNet(torch.nn.Module):
 
         x = F.relu(g1) + F.relu(g2) + F.relu(g3)
 
-        # x = F.relu(self.linear1(x))
-        # x = F.dropout(x, p=self.dropout, training=self.training)
-        # x = F.relu(self.linear2(x))
-        # x = F.dropout(x, p=self.dropout, training=self.training)
-        # x = F.log_softmax(self.linear3(x), dim=-1)
+        x = F.relu(self.linear1(x))
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = F.relu(self.linear2(x))
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = F.log_softmax(self.linear3(x), dim=-1)
 
         return x, g1, g2, g3, proj_1, proj_2, proj_3
 
