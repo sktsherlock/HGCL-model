@@ -101,7 +101,7 @@ def train(cf, model, dataloader):
 
             if data.x is None:
                 data.x = torch.ones(data.num_nodes, 1).to(cf.device)
-            _, g1, g2, g3, p1, p2, p3 = model(data.x, data.edge_index, data.batch, cf.device)
+            _, g1, g2, g3, p1, p2, p3 = model(data)
 
             loss = innercl(proj_1, proj_2) + innercl(proj_2, proj_3) + innercl(proj_1, proj_3)
             loss.backward()
