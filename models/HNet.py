@@ -2,7 +2,6 @@ import torch
 from torch_geometric.nn import GCNConv, SAGEConv, GINConv
 from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
 import torch.nn.functional as F
-# import topkpooling
 from torch_geometric.nn import TopKPooling
 from MLP import MLP
 
@@ -28,10 +27,9 @@ class HNet(torch.nn.Module):
         self.pooling_ratio = config.pooling_ratio
         self.dropout = config.dropout
 
-        self.conv1 = GINConv(
-            Sequential(Linear(self.num_features, self.hidden), ReLU(), Linear(self.hidden, self.hidden)))
-        self.conv2 = GINConv(Sequential(Linear(self.hidden, self.hidden), ReLU(), Linear(self.hidden, self.hidden)))
-        self.conv3 = GINConv(Sequential(Linear(self.hidden, self.hidden), ReLU(), Linear(self.hidden, self.hidden)))
+        self.conv1 = GCNConv(self.num_features, self.hidden)
+        self.conv2 = GCNConv(self.hidden, self.hidden)
+        self.conv3 = GCNConv(self.hidden, self.hidden)
 
         self.projection_head_1 = MLP(in_channels=self.hidden, hidden_channels=self.hidden, out_channels=128)
         self.projection_head_2 = MLP(in_channels=self.hidden, hidden_channels=self.hidden, out_channels=128)
