@@ -11,6 +11,25 @@ def _similarity(h1: torch.Tensor, h2: torch.Tensor):
     return h1 @ h2.t()
 
 
+def infonce(anchor, sample):
+    tau = 1
+    f = lambda x: torch.exp(x / tau)
+    sim = f(_similarity(anchor, sample))  # anchor x sample
+    num_graphs = anchor.shape[0]
+    device = anchor.device
+    pos_mask = torch.eye(num_graphs).to(device)
+    neg_mask = 1 - pos_mask
+    assert sim.size() == pos_mask.size()  # sanity check
+    pos = (sim * pos_mask).sum(dim=1)
+    neg = (sim * neg_mask).sum(dim=1)
+
+    loss = pos / (pos + neg)
+    loss = -torch.log(loss)
+
+    return loss.mean()
+
+
+
 class InfoNCE():
     """
     InfoNCE loss for single positive.

@@ -51,11 +51,8 @@ class CONPool(torch.nn.Module):
         #print(x_tp.shape)
         x_ts = F.leaky_relu(self.np_conv(x_transform, edge_index), 0.2)
         #print(x_tn.shape) #都是[点的数量,in_channels数量]  torch.Size([1693, 128])
-        s_lp = self.l_pooling(x_tl, edge_index).squeeze()#np.squeeze（）函数可以删除数组形状中的单维度条目，即把shape中为1的维度去掉，但是对非单维的维度不起作用。
-        #print(s_lp.shape) #torch.Size([1693] torch.Size([1409]) torch.Size([1173]) 三次之后
-        s_sp = self.s_pooling(x_ts, edge_index).squeeze()#利用squeeze（）函数将表示向量的数组转换为秩为1的数组
-        #print(s_sp.shape) #torch.Size([1693]
-        #print("--------------------------------------------------")
+        s_lp = self.l_pooling(x_tl, edge_index).squeeze()  #np.squeeze（）函数可以删除数组形状中的单维度条目，即把shape中为1的维度去掉，但是对非单维的维度不起作用。
+        s_sp = self.s_pooling(x_ts, edge_index).squeeze()  #利用squeeze（）函数将表示向量的数组转换为秩为1的数组
 
         perm_positive = topk(s_lp, self.ratio, batch)
         perm_negative = topk(s_sp, self.ratio, batch)
