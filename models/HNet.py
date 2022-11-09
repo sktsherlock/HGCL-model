@@ -47,7 +47,7 @@ class HNet(torch.nn.Module):
         x_0, edge_index_0, batch_0 = data.x, data.edge_index, data.batch
         edge_attr_0 = None
 
-        x = F.relu(self.conv1(x_0, edge_index_0, edge_attr_0))
+        x = F.relu(self.conv1(x_0, edge_index_0))
         local_proj_1 = self.projection_head_1(x)
         proj_1 = torch.cat([gmp(local_proj_1, batch_0), gap(local_proj_1, batch_0)], dim=1)
 
@@ -55,13 +55,13 @@ class HNet(torch.nn.Module):
 
         g1 = torch.cat([gmp(x_1, batch_1), gap(x_1, batch_1)], dim=1)
 
-        x = F.relu(self.conv2(x_1, edge_index_1, edge_attr_1))
+        x = F.relu(self.conv2(x_1, edge_index_1))
         local_proj_2 = self.projection_head_2(x)
         proj_2 = torch.cat([gmp(local_proj_2, batch_1), gap(local_proj_2, batch_1)], dim=1)
         x_2, edge_index_2, edge_attr_2, batch_2, _, _  = self.pool2(x, edge_index_1, edge_attr_1, batch_1)
         g2 = torch.cat([gmp(x_2, batch_2), gap(x_2, batch_2)], dim=1)
 
-        x = F.relu(self.conv3(x_2, edge_index_2, edge_attr_2))
+        x = F.relu(self.conv3(x_2, edge_index_2))
         local_proj_3 = self.projection_head_3(x)
         proj_3 = torch.cat([gmp(local_proj_3, batch_2), gap(local_proj_3, batch_2)], dim=1)
         x_3, edge_index_3, edge_attr_3, batch_3, _, _ = self.pool3(x, edge_index_2, edge_attr_2, batch_2)
