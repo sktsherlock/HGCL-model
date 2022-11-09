@@ -17,6 +17,8 @@ warnings.filterwarnings("ignore")
 parser = argparse.ArgumentParser(description="Graph Pooling")
 parser.add_argument('--HGCL_layer', type=int, default=3, help='model name')
 parser.add_argument('--batch_size', type=int, default=64, help='batch size')
+# add num_layers in parser
+parser.add_argument('--num_layers', type=int, default=3, help='number of layers')
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
 parser.add_argument('--far', type=int, default=3, help='FARPool training epoch')
 parser.add_argument('--dataset', type=str, default='PROTEINS',

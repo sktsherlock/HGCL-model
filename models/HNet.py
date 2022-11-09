@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import TopKPooling
 from MLP import MLP
 from torch import nn
-
+from models.Encoder import GIN
 
 class Config():
     def __init__(self):
@@ -24,13 +24,14 @@ class HNet(torch.nn.Module):
         super(HNet, self).__init__()
         self.num_features = args.num_features
         self.num_classes = args.num_classes
+        self.num_layers = args.num_layers
         self.hidden = config.hidden
         self.pooling_ratio = config.pooling_ratio
         self.dropout = config.dropout
 
-        self.conv1 = GINConv(nn.Sequential(nn.Linear(self.num_features, self.hidden), nn.ReLU(), nn.Linear(self.hidden, self.hidden)))
-        self.conv2 = GINConv(nn.Sequential(nn.Linear(self.hidden, self.hidden), nn.ReLU(), nn.Linear(self.hidden, self.hidden)))
-        self.conv3 = GINConv(nn.Sequential(nn.Linear(self.hidden, self.hidden), nn.ReLU(), nn.Linear(self.hidden, self.hidden)))
+        self.conv1 = GIN(self.num_features, self.hidden, self.num_layers)
+        self.conv2 = GIN(self.hidden, self.hidden, self.num_layers)
+        self.conv3 = GIN(self.hidden, self.hidden, self.num_layers)
 
         self.projection_head_1 = MLP(in_channels=self.hidden, hidden_channels=self.hidden, out_channels=128)
         self.projection_head_2 = MLP(in_channels=self.hidden, hidden_channels=self.hidden, out_channels=128)
