@@ -127,8 +127,8 @@ def test(encoder_model, dataloader):
         if data.x is None:
             num_nodes = data.batch.size(0)
             data.x = torch.ones((num_nodes, 1), dtype=torch.float32, device=data.batch.device)
-        _, g, g1, *_ = encoder_model(data.x, data.edge_index, data.batch)
-        g = args.mixup * g + (1 - args.mixup) * g1
+        g, g1, g2 = encoder_model(data.x, data.edge_index, data.batch)
+        g = g + g1 + g2
         x.append(g)
         y.append(data.y)
     x = torch.cat(x, dim=0)
@@ -217,7 +217,7 @@ def main():
                     wandb.log({'Acc': acc_mean})
 
                 pbar.set_postfix({'loss': loss})
-                wandb.log({"loss": loss, "Mix_CL_loss": loss_0, "Hierarchical_loss": loss_1})
+                wandb.log({"loss": loss, "Loss_inner": loss_0, "Hierarchical_loss": loss_1})
                 pbar.update()
 
         wandb.log({'Acc': acc_mean})

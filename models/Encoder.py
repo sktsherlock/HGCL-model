@@ -95,6 +95,21 @@ class HDGCL(nn.Module):
 
         return g, g3, g6, g1, g2, g4, g5, g7, g8
 
+    def get_embedding(self, x, edge_index, batch):
+        # 原始图级别
+        z, g = self.graph_encoder(x, edge_index, batch)     #For the hierarchical contrasting
+
+        # 子图级别开始
+        x_1, edge_index_1, edge_attr_1, batch_1, _, _ = self.pool_1(z, edge_index, batch=batch)
+        z3, g3 = self.sub_encoder1(x_1, edge_index_1, batch_1)  #For the hierarchical contrasting
+
+        # 第二子图级别开始
+        x_2, edge_index_2, edge_attr_2, batch_2, _, _ = self.pool_2(z3, edge_index_1, batch=batch_1)
+        z6, g6 = self.sub_encoder2(x_2, edge_index_2, batch_2)
+
+
+        return g, g3, g6
+
 class GIN(nn.Module):
     """
     init: input_dim, hidden_dim, num_layers
