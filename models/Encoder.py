@@ -73,25 +73,25 @@ class HDGCL(nn.Module):
         aug1, aug2 = self.augmentor
         x1, edge_index1, edge_weight1 = aug1(x, edge_index)
         x2, edge_index2, edge_weight2 = aug1(x, edge_index)
-        z, g = self.encoder(x, edge_index, batch)     #For the hierarchical contrasting
-        z1, g1 = self.encoder(x1, edge_index1, batch)
-        z2, g2 = self.encoder(x2, edge_index2, batch) #For the inner contrasting in the graph level
+        z, g = self.graph_encoder(x, edge_index, batch)     #For the hierarchical contrasting
+        z1, g1 = self.graph_encoder(x1, edge_index1, batch)
+        z2, g2 = self.graph_encoder(x2, edge_index2, batch) #For the inner contrasting in the graph level
 
         # 子图级别开始
         x_1, edge_index_1, edge_attr_1, batch_1, _, _ = self.pool_1(z, edge_index, batch=batch)
         x3, edge_index3, edge_weight3 = aug2(x_1, edge_index_1)
         x4, edge_index4, edge_weight4 = aug2(x_1, edge_index_1)
-        z3, g3 = self.encoder2(x_1, edge_index_1, batch_1)  #For the hierarchical contrasting
-        z4, g4 = self.encoder2(x3, edge_index3, batch_1)
-        z5, g5 = self.encoder2(x4, edge_index4, batch_1) #For the inner contrasting in the sub-graph level
+        z3, g3 = self.sub_encoder1(x_1, edge_index_1, batch_1)  #For the hierarchical contrasting
+        z4, g4 = self.sub_encoder1(x3, edge_index3, batch_1)
+        z5, g5 = self.sub_encoder1(x4, edge_index4, batch_1) #For the inner contrasting in the sub-graph level
 
         # 第二子图级别开始
         x_2, edge_index_2, edge_attr_2, batch_2, _, _ = self.pool_2(z3, edge_index_1, batch=batch_1)
-        x3, edge_index3, edge_weight3 = aug1(x_2, edge_index_2)
+        x3, edge_index3, edge_weight3 = aug2(x_2, edge_index_2)
         x4, edge_index4, edge_weight4 = aug2(x_2, edge_index_2)
-        z6, g6 = self.encoder2(x_2, edge_index_2, batch_2)
-        z7, g7 = self.encoder2(x3, edge_index3, batch_2)
-        z8, g8 = self.encoder2(x4, edge_index4, batch_2)
+        z6, g6 = self.sub_encoder2(x_2, edge_index_2, batch_2)
+        z7, g7 = self.sub_encoder2(x3, edge_index3, batch_2)
+        z8, g8 = self.sub_encoder2(x4, edge_index4, batch_2)
 
         return g, g3, g6, g1, g2, g4, g5, g7, g8
 
