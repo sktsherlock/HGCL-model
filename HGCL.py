@@ -120,7 +120,9 @@ def train(encoder_model, contrast_model, dataloader, optimizer):
 
 def test(encoder_model, dataloader):
     encoder_model.eval()
-    x = []
+    x0 = []
+    x1 = []
+    x2 = []
     y = []
     for data in dataloader:
         data = data.to('cuda')
@@ -128,15 +130,20 @@ def test(encoder_model, dataloader):
             num_nodes = data.batch.size(0)
             data.x = torch.ones((num_nodes, 1), dtype=torch.float32, device=data.batch.device)
         g, g1, g2 = encoder_model.get_embedding(data.x, data.edge_index, data.batch)
-        g = g + g1 + g2
-        x.append(g)
+        final_0 = g
+        final_1 = args.mixup * g + (1 - args.mixup) * (g1 + g2)
+
+        x0.append(final_0)
+        x1.append(final_1)
         y.append(data.y)
-    x = torch.cat(x, dim=0)
+    x_0 = torch.cat(x0, dim=0)
+    x_1 = torch.cat(x1, dim=0)
     y = torch.cat(y, dim=0)
 
-    acc_mean, acc_std = svc(x, y)
+    graph_acc_mean, acc_std = svc(x_0, y)
+    mix_acc_mean, acc_std = svc(x_1, y)
 
-    return acc_mean
+    return graph_acc_mean, mix_acc_mean
 
 
 def diffusion(args, epoch, way='stage'):
@@ -158,7 +165,8 @@ def main():
         args.device = "cuda"
     else:
         args.device = "cpu"
-    Acc_Mean = []
+    G_Acc_Mean = []
+    M_Acc_Mean = []
     for i in range(args.num_runs):
         set_seed(i)
 
@@ -206,26 +214,30 @@ def main():
         optimizer = Adam(encoder_model.parameters(), lr=args.lr)
 
         log_interval = args.eval_patience
-        Accuracy = []
+        G_Accuracy = []
+        M_Accuracy = []
         with tqdm(total=args.epochs, desc=f'(T){i}') as pbar:
             for epoch in range(1, args.epochs + 1):
                 loss, loss_0, loss_1 = train(encoder_model, contrast_model, dataloader, optimizer)
                 if epoch % log_interval == 0:
                     encoder_model.eval()
-                    acc_mean = test(encoder_model, dataloader)
-                    Accuracy.append(acc_mean)
-                    wandb.log({'Acc': acc_mean})
+                    graph_acc_mean, mix_acc_mean = test(encoder_model, dataloader)
+                    G_Accuracy.append(graph_acc_mean)
+                    M_Accuracy.append(mix_acc_mean)
+                    wandb.log({'G_Accuracy': graph_acc_mean, 'M_Accuracy': mix_acc_mean})
 
                 pbar.set_postfix({'loss': loss})
                 wandb.log({"loss": loss, "Loss_inner": loss_0, "Hierarchical_loss": loss_1})
                 pbar.update()
 
-        wandb.log({'Acc': acc_mean})
+        wandb.log({'G_Acc': graph_acc_mean, 'M_Acc': mix_acc_mean})
 
-        wandb.log({'Best Acc': max(Accuracy)})
-        Acc_Mean.append(max(Accuracy))
-    print('Run 5, the mean accuracy is {}'.format(np.mean(Acc_Mean)))
-    wandb.log({'Mean Acc': np.mean(Acc_Mean), 'Std': np.std(Acc_Mean)})
+        wandb.log({'Best G_Acc': max(G_Accuracy), 'Best M_Acc': max(M_Accuracy)})
+        G_Acc_Mean.append(max(G_Accuracy))
+        M_Acc_Mean.append(max(M_Accuracy))
+
+    # print('Run 5, the mean accuracy is {}'.format(np.mean(Acc_Mean)))
+    wandb.log({'Mean G_Acc': np.mean(G_Acc_Mean), 'G_Std': np.std(G_Acc_Mean), 'Mean M_Acc': np.mean(M_Acc_Mean), 'M_Std': np.std(M_Acc_Mean) })
 
 
 def test_init():
