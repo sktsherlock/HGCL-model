@@ -201,7 +201,7 @@ def main():
             pool_2 = TopKPooling(args.hidden * args.layers, ratio=args.pooling_ratio, min_score=args.min_score)
         else:
             raise ValueError('Not implement')
-        encoder_model = HDGCL(graph_encoder=gconv, augmentor=(aug1, aug2), pool_1=pool_1, pool_2=pool_2, sub_encoder1=gconv1, sub_encoder2=gconv2 , pool_way=args.pooling).to(args.device)
+        encoder_model = HDGCL(graph_encoder=gconv, augmentor=(aug1, aug2), pool_1=pool_1, pool_2=pool_2, sub_encoder1=gconv1, sub_encoder2=gconv2).to(args.device)
         contrast_model = DualBranchContrast(loss=L.InfoNCE(tau=0.2), mode='G2G').to(args.device)
         optimizer = Adam(encoder_model.parameters(), lr=args.lr)
 
