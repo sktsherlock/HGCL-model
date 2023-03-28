@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 from tqdm import  tqdm
 import json
-from models.HGCL3 import HGCL3
+# from models.HGCL3 import HGCL3
 from models.HGCL2 import HGCL2
 from models.HGCL1 import HGCL1
 import build_data
@@ -15,11 +15,11 @@ torch.set_printoptions(threshold=np.inf)
 
 warnings.filterwarnings("ignore")
 parser = argparse.ArgumentParser(description="Graph Pooling")
-parser.add_argument('--HGCL_layer', type=int, default=3, help='model name')
+parser.add_argument('--HGCL_layer', type=int, default=2, help='model name')
 parser.add_argument('--batch_size', type=int, default=64, help='batch size')
 parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
 parser.add_argument('--far', type=int, default=3, help='FARPool training epoch')
-parser.add_argument('--dataset', type=str, default='PROTEINS', help='MUTAG/DD/COLLAB/PTC_MR/IMDB-BINARY/REDDIT-BINARY/REDDIT-MULTI-5K/NCI1/PROTEINS')
+parser.add_argument('--dataset', type=str, default='MUTAG', help='MUTAG/DD/COLLAB/PTC_MR/IMDB-BINARY/REDDIT-BINARY/REDDIT-MULTI-5K/NCI1/PROTEINS')
 parser.add_argument('--epochs', type=int, default=20, help='maximum number of epochs')
 parser.add_argument('--seed', type=int, default=0, help='random seeds')
 parser.add_argument('--pooling_ratio', type=float, default=0.9, help='TopK pooling ration')
@@ -88,7 +88,7 @@ def train_pool(args, model, dataloader):
 def main():
     #检测是否有可用GPU
     if torch.cuda.is_available():
-        args.device = "cuda:0"
+        args.device = "cuda:1"
     else:
         args.device = "cpu"
     #设置随机种子
@@ -115,7 +115,7 @@ def main():
         config = Config()
         model = HGCL3(config, args, 2, 32).to(args.device)
     #第一阶段 训练FARPool部分，避免对比学习任务过于简单
-    train_pool(args, model, loader)
+    # train_pool(args, model, loader)
     #第二阶段 对比学习部分
     con_train(args, model, loader)
     #训练与测试完毕

@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch import nn
 from tqdm import tqdm
 from torch.optim import Adam
-from torch_geometric.nn import GINConv, global_add_pool
+from torch_geometric.nn import GINConv, global_add_pool, GCNConv
 from dgl.nn.pytorch import GraphConv
 from dgl.nn.pytorch.glob import SumPooling
 from utils import local_global_loss_
@@ -15,6 +15,85 @@ from torch.nn import Sequential, Linear, ReLU
 def make_gin_conv(input_dim, out_dim):
     return GINConv(nn.Sequential(nn.Linear(input_dim, out_dim), nn.ReLU(), nn.Linear(out_dim, out_dim)))
 
+def add_noise(x,  tradeoff):
+    if tradeoff > 0:
+        if tradeoff <= 1:
+            x = (1 - tradeoff) * x + torch.randn_like(x) * tradeoff
+        else:
+            raise ValueError('tradeoff <= 1')
+    return x
+
+class GConv(nn.Module):
+    """
+    GIN convolution module.
+    """
+    def __init__(self, input_dim, hidden_dim, num_layers):
+        super(GConv, self).__init__()
+        self.layers = nn.ModuleList()
+        self.batch_norms = nn.ModuleList()
+
+        for i in range(num_layers):
+            if i == 0:
+                self.layers.append(make_gin_conv(input_dim, hidden_dim))
+            else:
+                self.layers.append(make_gin_conv(hidden_dim, hidden_dim))
+            self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
+
+        project_dim = hidden_dim * num_layers
+        self.project = torch.nn.Sequential(
+            nn.Linear(project_dim, project_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(project_dim, project_dim))
+
+    def forward(self, x, edge_index, batch):
+        z = x
+        zs = []
+        for conv, bn in zip(self.layers, self.batch_norms):
+            z = conv(z, edge_index)
+            z = F.relu(z)
+            z = bn(z)
+            zs.append(z)
+        gs = [global_add_pool(z, batch) for z in zs]
+        z, g = [torch.cat(x, dim=1) for x in [zs, gs]]
+        return z, g
+
+class HDGCL(nn.Module):
+    def __init__(self, graph_encoder, augmentor, pool_1, pool_2,  sub_encoder1, sub_encoder2):
+        super(HDGCL, self).__init__()
+        self.graph_encoder = graph_encoder
+        self.sub_encoder1 = sub_encoder1
+        self.sub_encoder2 = sub_encoder2
+        self.augmentor = augmentor
+        self.pool_1 = pool_1
+        self.pool_2 = pool_2
+
+
+    def forward(self, x, edge_index, batch):
+        # 原始图级别
+        aug1, aug2 = self.augmentor
+        x1, edge_index1, edge_weight1 = aug1(x, edge_index)
+        x2, edge_index2, edge_weight2 = aug1(x, edge_index)
+        z, g = self.encoder(x, edge_index, batch)     #For the hierarchical contrasting
+        z1, g1 = self.encoder(x1, edge_index1, batch)
+        z2, g2 = self.encoder(x2, edge_index2, batch) #For the inner contrasting in the graph level
+
+        # 子图级别开始
+        x_1, edge_index_1, edge_attr_1, batch_1, _, _ = self.pool_1(z, edge_index, batch=batch)
+        x3, edge_index3, edge_weight3 = aug2(x_1, edge_index_1)
+        x4, edge_index4, edge_weight4 = aug2(x_1, edge_index_1)
+        z3, g3 = self.encoder2(x_1, edge_index_1, batch_1)  #For the hierarchical contrasting
+        z4, g4 = self.encoder2(x3, edge_index3, batch_1)
+        z5, g5 = self.encoder2(x4, edge_index4, batch_1) #For the inner contrasting in the sub-graph level
+
+        # 第二子图级别开始
+        x_2, edge_index_2, edge_attr_2, batch_2, _, _ = self.pool_2(z3, edge_index_1, batch=batch_1)
+        x3, edge_index3, edge_weight3 = aug1(x_2, edge_index_2)
+        x4, edge_index4, edge_weight4 = aug2(x_2, edge_index_2)
+        z6, g6 = self.encoder2(x_2, edge_index_2, batch_2)
+        z7, g7 = self.encoder2(x3, edge_index3, batch_2)
+        z8, g8 = self.encoder2(x4, edge_index4, batch_2)
+
+        return g, g3, g6, g1, g2, g4, g5, g7, g8
 
 class GIN(nn.Module):
     """
