@@ -131,7 +131,7 @@ def test(encoder_model, dataloader):
             data.x = torch.ones((num_nodes, 1), dtype=torch.float32, device=data.batch.device)
         g, g1, g2 = encoder_model.get_embedding(data.x, data.edge_index, data.batch)
         # final_0 = g
-        final_1 = args.mixup* g + (1 - args.mixup) * (g1 + g2)
+        final_1 = args.mixup* g + (1 - args.mixup) * (g1 + g2) / 2
 
         # x0.append(final_0)
         x1.append(final_1)
