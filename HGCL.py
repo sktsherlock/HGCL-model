@@ -105,7 +105,7 @@ def train(encoder_model, contrast_model, dataloader, optimizer):
         g6, g7, g8 = [encoder_model.sub_encoder2.project(g) for g in [g6, g7, g8]]
         #! Contrasting Loss
         loss_inner = contrast_model(g1=g1, g2=g2) + contrast_model(g1=g4, g2=g5) + contrast_model(g1=g7, g2=g8)
-        loss_hierarchical = contrast_model(g1=g, g2=g3) + contrast_model(g1=g3, g2=g6)
+        loss_hierarchical = contrast_model(g1=g, g2=g3) + contrast_model(g1=g3, g2=g6) + contrast_model(g1=g, g2=g6)
 
         loss = loss_inner + args.tradeoff * loss_hierarchical
         loss.backward()
