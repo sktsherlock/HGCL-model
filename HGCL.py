@@ -207,6 +207,9 @@ def main():
         if args.pooling in {'topk', 'TopK'}:
             pool_1 = TopKPooling(args.hidden * args.layers, ratio=args.pooling_ratio, min_score=args.min_score)
             pool_2 = TopKPooling(args.hidden * args.layers, ratio=args.pooling_ratio, min_score=args.min_score)
+        elif args.pooling in {'SAGPooling', 'SAG'}:
+            pool_1 = SAGPooling(args.hidden * args.layers, ratio=args.pooling_ratio, min_score=args.min_score)
+            pool_2 = SAGPooling(args.hidden * args.layers, ratio=args.pooling_ratio, min_score=args.min_score)
         else:
             raise ValueError('Not implement')
         encoder_model = HDGCL(graph_encoder=gconv, augmentor=(aug1, aug2), pool_1=pool_1, pool_2=pool_2, sub_encoder1=gconv1, sub_encoder2=gconv2).to(args.device)
